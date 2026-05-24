@@ -1,6 +1,44 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
+struct MemoStor {
+    char** lines;
+    int lines_count;
+    int capacity;
+};
+
+struct MemoStor* call_editor() {
+    struct MemoStor* arr = (struct MemoStor*)malloc(sizeof(struct MemoStor));
+    arr->lines_count = 1;
+    arr->capacity = 2;
+    arr->lines = (char**)malloc(arr->capacity * sizeof(char*));
+    arr->lines[0] = (char*)malloc(1 * sizeof(char));
+    arr->lines[0][0] = '\0';
+    return arr;
+}
+
+void Append(struct MemoStor* arr) {
+    char input[256];
+    printf("enter text you want to append\n");
+    while (getchar() != '\n');
+
+    fgets(input, sizeof(input), stdin);
+    input[strcspn(input, "\n")] = '\0';
+
+    char *current_line = arr->lines[arr->lines_count - 1];
+    int currentL_len = strlen(current_line);
+    int new_len = strlen(input);
+    char *temp = realloc(arr->lines[arr->lines_count - 1], (currentL_len + new_len+1) * sizeof(char));
+    if (temp != NULL) {
+        arr->lines[arr->lines_count - 1] = temp;
+        strcat(arr->lines[arr->lines_count - 1], input);
+        printf("text appended successfully\n");
+    }
+    else {
+        printf("Malloc failed\n");
+    }
+}
 void run_editor() {
     int choice;
     int running = 1;
@@ -37,6 +75,7 @@ void run_editor() {
 
     }
 }
+
 int main() {
     
 
