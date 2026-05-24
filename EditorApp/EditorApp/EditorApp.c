@@ -1,72 +1,44 @@
 #include <stdio.h>
 #include <stdlib.h>
-struct Node {
-    int value;
-    struct Node* next;
-};
-struct Node* create(int value) {
-    struct Node* new_node = (struct Node*)malloc(sizeof(struct Node));
-    new_node->value = value;
-    new_node->next = NULL;
-    return new_node;
-}
-void push_back(struct Node** head, int value) {
-    struct Node* extra = malloc(sizeof(struct Node));
-    extra->value = value;
-    extra->next = NULL;
-    struct Node* current = *head;
-    while (current->next != NULL) {
-        current = current->next;
+
+void run_editor() {
+    int choice;
+    int running = 1;
+    while (running) {
+        int choice;
+        printf("\navaliable commands:\n");
+        printf("1.Append text\n");
+        printf("2.Start new line\n");
+        printf("3.Save into file\n");
+        printf("4.Load from file\n");
+        printf("5.Print current text\n");
+        printf("6.Insert text by line and index\n");
+        printf("7.Search text\n");
+        printf("0.Leave\n");
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input. Enter a number\n");
+            while (getchar() != '\n') {
+            continue;
+            }
+        }
+        switch (choice) {
+        case 1:printf("Function not implemented\n"); break;
+        case 2:printf("Function not implemented\n"); break;
+        case 3:printf("Function not implemented\n"); break;
+        case 4:printf("Function not implemented\n"); break;
+        case 5:printf("Function not implemented\n"); break;
+        case 6:printf("Function not implemented\n"); break;
+        case 7:printf("Function not implemented\n"); break;
+        case 0:printf("Exiting\n");
+            running = 0;
+            break;
+        default: printf("Function not implemented\n");
+        }
+
     }
-    current->next = extra;
-}
-void push_front(struct Node** head, int value) {
-    struct Node* extra = malloc(sizeof(struct Node));
-    extra->value = value;
-    extra->next = *head;
-    *head = extra;
-}
-void print(struct Node** head) {
-    struct Node* current = *head;
-    while (current != NULL) {
-        printf("%d ", current->value);
-        current = current->next;
-    }
-    printf("\n");
-}
-void destroy(struct Node** head) {
-    struct Node* current = *head;
-    while (current != NULL) {
-        struct Node* next = current->next;
-        free(current);
-        current = next;
-    }
-    *head = NULL;
-}
-void reverse(struct Node** head) {
-    struct Node* prev = NULL;
-    struct Node* current = *head;
-    struct Node* next = NULL;
-    while (current != NULL) {
-        next = current->next;
-        current->next = prev;
-        prev = current;
-        current = next;
-    }
-    *head = prev;
 }
 int main() {
-    struct Node* head = create(1);
-    push_back(&head, 2);
-    push_back(&head, 3);
-    push_back(&head, 4);
-    push_front(&head, 0);
-    printf("before reverse\n");
-    print(&head);
-    reverse(&head);
-    printf("after reverse\n");
-    print(&head);
-    destroy(&head);
+    
 
     return 0;
 }
