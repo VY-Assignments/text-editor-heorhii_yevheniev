@@ -131,6 +131,10 @@ void insert_text(struct MemoStor* arr) {
     char input[200];
     printf("which line insert to?\n");
     scanf("%d", &line);
+    if (line < 0 || line > arr->lines_count) {
+        printf("Error: line number out of range");
+        return;
+    }
     printf("to which position insert?\n");
     scanf("%d", &pos);
     while (getchar() != '\n');
@@ -154,6 +158,28 @@ void insert_text(struct MemoStor* arr) {
     memmove(arr->lines[line] + pos + new_len, arr->lines[line] + pos, currentL_len - pos + 1);
     memcpy(arr->lines[line] + pos, input, new_len);
     printf("Text was inserted\n");
+}
+
+void search_text(struct MemoStor* arr) {
+    char search[100];
+    printf("enter text to search for\n");
+    while (getchar() != '\n');
+    fgets(search, sizeof(search), stdin);
+    search[strcspn(search, "\n")] = '\0';
+
+    int found = 0;
+    for (int i = 0; i < arr->lines_count; i++) {
+        char* found_index = strstr(arr->lines[i], search);
+
+        while (found_index != NULL) {
+            printf("Found in line %d at index %d\n", i + 1, found_index - arr->lines[i]);
+            found = 1;
+            found_index = strstr(found_index + 1, search);
+        }
+    }
+    if (!found) {
+        printf("text not found\n");
+    }
 }
 void run_editor(struct MemoStor* arr) {
     int choice;
@@ -181,7 +207,7 @@ void run_editor(struct MemoStor* arr) {
         case 4:load_from_file(arr); break;
         case 5:print_current(arr); break;
         case 6:insert_text(arr); break;
-        case 7:printf("Function not implemented\n"); break;
+        case 7:search_text(arr); break;
         case 0:printf("Exiting\n");
             running = 0;
             break;
