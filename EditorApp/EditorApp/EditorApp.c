@@ -181,6 +181,16 @@ void search_text(struct MemoStor* arr) {
         printf("text not found\n");
     }
 }
+void free_all(struct MemoStor* arr) {
+    for (int i = 0; i < arr->lines_count; i++) {
+        free(arr->lines[i]);
+        arr->lines[i] = NULL;
+    }
+    free(arr->lines);
+    arr->lines = NULL;
+    free(arr);
+    arr = NULL;
+}
 void run_editor(struct MemoStor* arr) {
     int choice;
     int running = 1;
@@ -222,6 +232,6 @@ int main() {
     struct MemoStor* arr = call_editor();
     run_editor(arr);
 
-
+    free_all(arr);
     return 0;
 }
