@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,7 +60,7 @@ void start_new_line(struct MemoStor* arr) {
     }
     arr->lines[arr->lines_count][0] = '\0';
     arr->lines_count++;
-    printf("new line started");
+    printf("new line started\n");
 }
 
 void save_to_file(struct MemoStor* arr) {
@@ -117,11 +118,16 @@ void load_from_file(struct MemoStor* arr) {
     fclose(file);
     printf("text from file aploaded successfully\n");
 }
-void run_editor() {
+
+void print_current(struct MemoStor* arr) {
+    for (int i = 0; i < arr->lines_count; i++) {
+        printf("%d: %s\n", i + 1, arr->lines[i]);
+    }
+}
+void run_editor(struct MemoStor* arr) {
     int choice;
     int running = 1;
     while (running) {
-        int choice;
         printf("\navaliable commands:\n");
         printf("1.Append text\n");
         printf("2.Start new line\n");
@@ -138,11 +144,11 @@ void run_editor() {
             }
         }
         switch (choice) {
-        case 1:printf("Function not implemented\n"); break;
-        case 2:printf("Function not implemented\n"); break;
-        case 3:printf("Function not implemented\n"); break;
-        case 4:printf("Function not implemented\n"); break;
-        case 5:printf("Function not implemented\n"); break;
+        case 1:Append(arr); break;
+        case 2:start_new_line(arr); break;
+        case 3:save_to_file(arr); break;
+        case 4:load_from_file(arr); break;
+        case 5:print_current(arr); break;
         case 6:printf("Function not implemented\n"); break;
         case 7:printf("Function not implemented\n"); break;
         case 0:printf("Exiting\n");
@@ -152,10 +158,13 @@ void run_editor() {
         }
 
     }
+    
 }
 
 int main() {
-    
+    struct MemoStor* arr = call_editor();
+    run_editor(arr);
+
 
     return 0;
 }
