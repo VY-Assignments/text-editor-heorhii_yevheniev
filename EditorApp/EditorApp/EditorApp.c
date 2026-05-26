@@ -124,6 +124,37 @@ void print_current(struct MemoStor* arr) {
         printf("%d: %s\n", i + 1, arr->lines[i]);
     }
 }
+
+void insert_text(struct MemoStor* arr) {
+    int line;
+    int pos;
+    char input[200];
+    printf("which line insert to?\n");
+    scanf("%d", &line);
+    printf("to which position insert?\n");
+    scanf("%d", &pos);
+    while (getchar() != '\n');
+    printf("enter text you want to insert\n");
+
+    fgets(input, sizeof(input), stdin);
+    input[strcspn(input, "\n")] = '\0';
+
+    int currentL_len = strlen(arr->lines[line]);
+    int new_len = strlen(input);
+
+    if (pos > currentL_len) pos = currentL_len;
+    char* tryy = realloc(arr->lines[line], (currentL_len + new_len + 1) * sizeof(char));
+    if (tryy != NULL) {
+        arr->lines[line] = tryy;
+    }
+    else {
+        printf("Malloc failed\n");
+        return;
+    }
+    memmove(arr->lines[line] + pos + new_len, arr->lines[line] + pos, currentL_len - pos + 1);
+    memcpy(arr->lines[line] + pos, input, new_len);
+    printf("Text was inserted\n");
+}
 void run_editor(struct MemoStor* arr) {
     int choice;
     int running = 1;
@@ -149,7 +180,7 @@ void run_editor(struct MemoStor* arr) {
         case 3:save_to_file(arr); break;
         case 4:load_from_file(arr); break;
         case 5:print_current(arr); break;
-        case 6:printf("Function not implemented\n"); break;
+        case 6:insert_text(arr); break;
         case 7:printf("Function not implemented\n"); break;
         case 0:printf("Exiting\n");
             running = 0;
