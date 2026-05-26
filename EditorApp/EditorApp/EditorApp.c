@@ -137,6 +137,10 @@ void insert_text(struct MemoStor* arr) {
     }
     printf("to which position insert?\n");
     scanf("%d", &pos);
+    if (pos > strlen(arr->lines[line])) {
+        printf("insertion index out of range\n");
+        return;
+    }
     while (getchar() != '\n');
     printf("enter text you want to insert\n");
 
