@@ -7,6 +7,14 @@ struct MemoStor {
     char** lines;
     int lines_count;
     int capacity;
+
+    struct MemoStor** undo_stack;
+    int undo_top;
+    int undo_capacity;
+
+    struct MemoStor** redo_stack;
+    int redo_top;
+    int redo_capacity;
 };
 
 struct MemoStor* call_editor() {
@@ -16,10 +24,111 @@ struct MemoStor* call_editor() {
     arr->lines = (char**)malloc(arr->capacity * sizeof(char*));
     arr->lines[0] = (char*)malloc(1 * sizeof(char));
     arr->lines[0][0] = '\0';
+
+    arr->undo_capacity = 5;
+    arr->undo_top = 0;
+    arr->undo_stack = (struct MemoStor**)malloc(arr->undo_capacity * sizeof(struct MemoStor*));
+    for (int i = 0; i < arr->undo_capacity; i++) {
+        arr->undo_stack[i] = NULL;
+    }
+
+    arr->redo_capacity = 5;
+    arr->redo_top = 0;
+    arr->redo_stack = (struct MemoStor**)malloc(arr->redo_capacity * sizeof(struct MemoStor*));
+    for (int i = 0; i < arr->redo_capacity; i++) {
+        arr->redo_stack[i] = NULL;
+    }
     return arr;
 }
 
+struct MemoStor* memo_copy(struct MemoStor* arr) {
+    struct MemoStor* copy = (struct MemoStor*)malloc(sizeof(struct MemoStor));
+    copy->lines_count = arr->lines_count;
+    copy->capacity = arr->capacity;
+    copy->lines = (char**)malloc(copy->capacity * sizeof(char*));
+    if (!copy->lines) {
+        free(copy);
+        return NULL;
+    }
+    for (int i = 0; i < arr->lines_count; i++) {
+        int len = strlen(arr->lines[i]);
+        copy->lines[i] = (char*)malloc((len + 1) * sizeof(char));
+        if (!copy->lines[i]) {
+            for (int j = 0; j < i;j++) free(copy->lines[j]);
+            free(copy->lines);
+            free(copy);
+            return NULL;
+        }
+        strcpy(copy->lines[i], arr->lines[i]);
+    }
+    return copy;
+}
+
+void save_state(struct MemoStor* arr) {
+    if (arr->undo_top < arr->undo_capacity) {
+        arr->undo_stack[arr->undo_top] = memo_copy(arr);
+        arr->undo_top++;
+    }
+}
+
+void undo(struct MemoStor* arr) {
+    if (arr->undo_top <= 0) {
+        printf("no actions to undo\n");
+        return;
+    }
+
+    for (int i = 0; i < arr->lines_count; i++) free(arr->lines[i]);
+    free(arr->lines);
+    arr->undo_top--;
+    struct MemoStor* copy = arr->undo_stack[arr->undo_top];
+    arr->lines = copy->lines;
+    arr->lines_count = copy->lines_count;
+    arr->capacity = copy->capacity;
+
+    free(copy);
+    printf("undo completed\n");
+}
+
+void redo(struct MemoStor* arr) {
+    if (arr->redo_top <= 0) {
+        printf("no actions to redo\n");
+        return;
+    }
+    save_state(arr);
+    for (int i = 0; i < arr->lines_count; i++) free(arr->lines[i]);
+    free(arr->lines);
+    arr->redo_top--;
+    struct MemoStor* copy = arr->redo_stack[arr->redo_top];
+
+    arr->lines = copy->lines;
+    arr->lines_count = copy->lines_count;
+    arr->capacity = copy->capacity;
+    free(copy);
+    arr->redo_stack[arr->redo_top] = NULL;
+    printf("Redo completed\n");
+}
+
+void clear_redo_stack(struct MemoStor* arr) {
+    if (arr->redo_stack == NULL) return;
+
+    for (int i = 0; i < arr->redo_top; i++) {
+        if (arr->redo_stack[i] != NULL) {
+            for (int j = 0; j < arr->redo_stack[i]->lines_count; j++) {
+                free(arr->redo_stack[i]->lines[j]);
+                arr->redo_stack[i]->lines[j] = NULL;
+            }
+            free(arr->redo_stack[i]->lines);
+            arr->redo_stack[i]->lines = NULL;
+            free(arr->redo_stack[i]);
+            arr->redo_stack[i] = NULL;
+        }
+    }
+    arr->redo_top = 0;
+}
+
 void Append(struct MemoStor* arr) {
+    save_state(arr);
+    clear_redo_stack(arr);
     char input[256];
     printf("enter text you want to append\n");
     while (getchar() != '\n');
@@ -42,6 +151,8 @@ void Append(struct MemoStor* arr) {
 }
 
 void start_new_line(struct MemoStor* arr) {
+    save_state(arr);
+    clear_redo_stack(arr);
     if (arr->lines_count >= arr->capacity) {
         int new_capacity = arr->capacity *= 2;
         char** tryy = realloc(arr->lines, new_capacity * sizeof(char*));
@@ -126,6 +237,8 @@ void print_current(struct MemoStor* arr) {
 }
 
 void insert_text(struct MemoStor* arr) {
+    save_state(arr);
+    clear_redo_stack(arr);
     int line;
     int pos;
     char input[200];
@@ -185,7 +298,83 @@ void search_text(struct MemoStor* arr) {
         printf("text not found\n");
     }
 }
+
+void insert_replace_text(struct MemoStor* arr) {
+    save_state(arr);
+    clear_redo_stack(arr);
+    int line;
+    int pos;
+    char input[200];
+    printf("which line insert to?\n");
+    scanf("%d", &line);
+    if (line < 0 || line > arr->lines_count) {
+        printf("Error: line number out of range");
+        return;
+    }
+    printf("to which position insert?\n");
+    scanf("%d", &pos);
+    if (pos > strlen(arr->lines[line])) {
+        printf("insertion index out of range\n");
+        return;
+    }
+    while (getchar() != '\n');
+    printf("enter text you want to insert\n");
+
+    fgets(input, sizeof(input), stdin);
+    input[strcspn(input, "\n")] = '\0';
+
+    int currentL_len = strlen(arr->lines[line]);
+    int insert_len = strlen(input);
+    int new_len = currentL_len;
+    if (pos > currentL_len) pos = currentL_len;
+    if (currentL_len < pos + insert_len) {
+        char* tryy = realloc(arr->lines[line], (pos + insert_len + 1) * sizeof(char));
+        if (tryy != NULL) {
+            arr->lines[line] = tryy;
+        }
+        else {
+            printf("Malloc failed\n");
+            return;
+        }
+        new_len = pos + insert_len;
+    }
+    
+    
+    memcpy(arr->lines[line] + pos, input, insert_len);
+    arr->lines[line][new_len] = '\0';
+    printf("Text was replaced/inserted\n");
+}
 void free_all(struct MemoStor* arr) {
+    for (int i = 0; i < arr->undo_top; i++) {
+        if (arr->undo_stack[i] != NULL) {
+            for (int j = 0; j < arr->undo_stack[i]->lines_count; j++) {
+                free(arr->undo_stack[i]->lines[j]);
+                arr->undo_stack[i]->lines[j] = NULL;
+            }
+            free(arr->undo_stack[i]->lines);
+            arr->undo_stack[i]->lines = NULL;
+            free(arr->undo_stack[i]);
+            arr->undo_stack[i] = NULL;
+        }
+    }
+    free(arr->undo_stack);
+    arr->undo_stack = NULL;
+    
+    for (int i = 0; i < arr->redo_top;i++) {
+        if (arr->redo_stack[i]) {
+            for (int j = 0; j < arr->redo_stack[i]->lines_count; j++) {
+                free(arr->redo_stack[i]->lines[j]);
+                arr->redo_stack[i]->lines[j] = NULL;
+            }
+            free(arr->redo_stack[i]->lines);
+            arr->redo_stack[i]->lines = NULL;
+            free(arr->redo_stack[i]);
+            arr->redo_stack[i] = NULL;
+        }
+    }
+    free(arr->redo_stack);
+    arr->redo_stack = NULL;
+
     for (int i = 0; i < arr->lines_count; i++) {
         free(arr->lines[i]);
         arr->lines[i] = NULL;
@@ -207,6 +396,9 @@ void run_editor(struct MemoStor* arr) {
         printf("5.Print current text\n");
         printf("6.Insert text by line and index\n");
         printf("7.Search text\n");
+        printf("8.Insert with replacement by line and index\n");
+        printf("9.undo\n");
+        printf("10.redo\n");
         printf("0.Leave\n");
         if (scanf("%d", &choice) != 1) {
             printf("Invalid input. Enter a number\n");
@@ -222,6 +414,9 @@ void run_editor(struct MemoStor* arr) {
         case 5:print_current(arr); break;
         case 6:insert_text(arr); break;
         case 7:search_text(arr); break;
+        case 8:insert_replace_text(arr); break;
+        case 9:undo(arr);break;
+        case 10:redo(arr);break;
         case 0:printf("Exiting\n");
             running = 0;
             break;
