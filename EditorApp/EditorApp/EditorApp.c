@@ -15,6 +15,8 @@ struct MemoStor {
     struct MemoStor** redo_stack;
     int redo_top;
     int redo_capacity;
+
+    char* buffer;
 };
 
 struct MemoStor* call_editor() {
@@ -38,6 +40,8 @@ struct MemoStor* call_editor() {
     for (int i = 0; i < arr->redo_capacity; i++) {
         arr->redo_stack[i] = NULL;
     }
+
+    arr->buffer = NULL;
     return arr;
 }
 
@@ -344,6 +348,82 @@ void insert_replace_text(struct MemoStor* arr) {
     arr->lines[line][new_len] = '\0';
     printf("Text was replaced/inserted\n");
 }
+
+void delete_text(struct MemoStor* arr) {
+    int line, pos, count;
+    printf("enter line, index and number of symbols\n");
+    scanf("%d %d %d", &line, &pos, &count);
+
+    if (line < 0 || line >= arr->lines_count || pos < 0 || pos >= strlen(arr->lines[line])) {
+        printf("invalid input\n");
+        return;
+    }
+
+    save_state(arr);
+    clear_redo_stack(arr);
+    char* new_line = arr->lines[line];
+    int len = strlen(new_line);
+    if (pos + count > len) count = len - pos;
+
+    memmove(new_line + pos, new_line + pos + count, len - pos - count + 1);
+    char* tryy = realloc(new_line, (len - count + 1) * sizeof(char));
+    if (tryy != NULL) {
+        arr->lines[line] = tryy;
+    }
+    printf("text deleted\n");
+}
+
+void copy_text(struct MemoStor* arr) {
+    int line, pos, count;
+    printf("enter line, index and number of symbols\n");
+    scanf("%d %d %d", &line, &pos, &count);
+    if (line < 0 || line >= arr->lines_count || pos < 0 || pos >= strlen(arr->lines[line])) {
+        printf("wrong input\n");
+        return;
+    }
+    free(arr->buffer);
+    arr->buffer = (char*)malloc((count + 1) * sizeof(char));
+    if (arr->buffer) {
+        strncpy(arr->buffer, arr->lines[line] + pos, count);
+        arr->buffer[count] = '\0';
+    }
+}
+
+void cut_text(struct MemoStor* arr) {
+    copy_text(arr);
+    if (arr->buffer == NULL) {
+        printf("unable to load text to buffer\n");
+        return;
+    }
+    delete_text(arr);
+    printf("text cut to buffer\n");
+}
+
+void paste_text(struct MemoStor* arr) {
+    if (arr->buffer == NULL) {
+        printf("buffer is empty\n");
+        return;
+    }
+    int line, pos;
+    printf("enter line and index\n");
+    scanf("%d %d", &line, &pos);
+    if (line < 0 || line >= arr->lines_count || pos < 0 || pos >= strlen(arr->lines[line])) {
+        printf("wrong input\n");
+        return;
+    }
+    save_state(arr);
+    clear_redo_stack(arr);
+
+    int buffer_len = strlen(arr->buffer);
+    int current_len = strlen(arr->lines[line]);
+    char* tryy = realloc(arr->lines[line], (current_len + buffer_len + 1) * sizeof(char));
+    if (tryy) {
+        arr->lines[line] = tryy;
+        memmove(arr->lines[line] + pos + buffer_len, arr->lines[line] + pos, current_len - pos + 1);
+        memcpy(arr->lines[line] + pos, arr->buffer, buffer_len);
+    }
+}
+
 void free_all(struct MemoStor* arr) {
     for (int i = 0; i < arr->undo_top; i++) {
         if (arr->undo_stack[i] != NULL) {
@@ -375,6 +455,9 @@ void free_all(struct MemoStor* arr) {
     free(arr->redo_stack);
     arr->redo_stack = NULL;
 
+    free(arr->buffer);
+    arr->buffer = NULL;
+
     for (int i = 0; i < arr->lines_count; i++) {
         free(arr->lines[i]);
         arr->lines[i] = NULL;
@@ -399,6 +482,10 @@ void run_editor(struct MemoStor* arr) {
         printf("8.Insert with replacement by line and index\n");
         printf("9.undo\n");
         printf("10.redo\n");
+        printf("11.cut\n");
+        printf("12.copy\n");
+        printf("13.paste\n");
+        printf("14.delete text\n");
         printf("0.Leave\n");
         if (scanf("%d", &choice) != 1) {
             printf("Invalid input. Enter a number\n");
@@ -417,6 +504,10 @@ void run_editor(struct MemoStor* arr) {
         case 8:insert_replace_text(arr); break;
         case 9:undo(arr);break;
         case 10:redo(arr);break;
+        case 11:cut_text(arr);break;
+        case 12:copy_text(arr);break;
+        case 13:paste_text(arr);break;
+        case 14:delete_text(arr);break;
         case 0:printf("Exiting\n");
             running = 0;
             break;
