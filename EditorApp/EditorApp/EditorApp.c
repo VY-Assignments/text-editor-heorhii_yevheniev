@@ -80,7 +80,10 @@ void undo(struct MemoStor* arr) {
         printf("no actions to undo\n");
         return;
     }
-
+    if (arr->redo_top < arr->redo_capacity) {
+        arr->redo_stack[arr->redo_top] = memo_copy(arr);
+        arr->redo_top++;
+    }
     for (int i = 0; i < arr->lines_count; i++) free(arr->lines[i]);
     free(arr->lines);
     arr->undo_top--;

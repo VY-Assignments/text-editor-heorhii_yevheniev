@@ -6,5 +6,5 @@
   <Folder Name="/Solution Items/">
     <File Path=".gitignore" />
   </Folder>
-  <Project Path="EditorApp/EditorApp.vcxproj" />
+  <Project Path="EditorApp/EditorApp.vcxproj" Id="8f5d791a-d8b4-4d6b-bc30-583a242a2736" />
 </Solution>
