@@ -353,6 +353,8 @@ void insert_replace_text(struct MemoStor* arr) {
 }
 
 void delete_text(struct MemoStor* arr) {
+    save_state(arr);
+    clear_redo_stack(arr);
     int line, pos, count;
     printf("enter line, index and number of symbols\n");
     scanf("%d %d %d", &line, &pos, &count);
@@ -362,8 +364,7 @@ void delete_text(struct MemoStor* arr) {
         return;
     }
 
-    save_state(arr);
-    clear_redo_stack(arr);
+    
     char* new_line = arr->lines[line];
     int len = strlen(new_line);
     if (pos + count > len) count = len - pos;
@@ -393,6 +394,8 @@ void copy_text(struct MemoStor* arr) {
 }
 
 void cut_text(struct MemoStor* arr) {
+    save_state(arr);
+    clear_redo_stack(arr);
     copy_text(arr);
     if (arr->buffer == NULL) {
         printf("unable to load text to buffer\n");
