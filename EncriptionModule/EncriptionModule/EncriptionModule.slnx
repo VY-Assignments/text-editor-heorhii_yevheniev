@@ -3,8 +3,8 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="CipherApp/CipherApp.vcxproj">
+  <Project Path="CipherApp/CipherApp.vcxproj" Id="7c5c34e0-b8b3-4d16-a22a-630f3498cd8a">
     <BuildDependency Project="EncriptionModule/EncriptionModule.vcxproj" />
   </Project>
-  <Project Path="EncriptionModule/EncriptionModule.vcxproj" />
+  <Project Path="EncriptionModule/EncriptionModule.vcxproj" Id="63c8af2a-7078-4e39-a32d-5e3631d3fdf3" />
 </Solution>

@@ -1,79 +1,153 @@
-#include <iostream>
-#include <string>
-#include <fstream>
-
-class Dog {
+#include<iostream>
+#include<string>
+class Computer {
 private:
-    std::string name;
-    uint8_t age;
-
+	std::string model;
+	int ram;
 public:
-    Dog(std::string n, uint8_t a) {
-        name = n;
-        age = a;
-    }
+	Computer(std::string model, int ram) {
+		this->model = model;
+		this->ram = ram;
+	}
 
-    std::string get_name() const { return name; }
-    uint8_t get_age() const { return age; }
+	void describe() const {
+		std::cout << "Computer:" << model << ", RAM:" << ram << "\n";
+	}
 
-    void serialize(uint8_t* buffer, size_t& length) const {
-        length = 0;
+};
+class Printer {
+private:
+	std::string model;
+	bool color;
+public:
+	Printer(std::string model, bool color) {
+		this->model = model;
+		this->color = color;
+	}
 
-        for (int i = 0; i < name.length(); i++) {
-            buffer[length] = name[i];
-            length++;
-        }
+	void describe()const{
+		std::cout << "Printer model:" << model;
+		if (color) {
+			std::cout << ", IS color printor\n";
+		}
+		else {
+			std::cout << "is NOT color printor\n";
+		}
+		}
 
-        buffer[length] = '\0';
-        length++;
+};
+class Teacher {
+private:
+	std::string name;
+	std::string disceplyne;
+public:
+	Teacher(std::string Name, std::string Disceplyne) {
+		this->disceplyne = Disceplyne;
+		this->name = Name;
+	}
 
-        buffer[length] = age;
-        length++;
-    }
+	void describe() const {
+		std::cout << "Teachers name: " << name << ", Teachers subject: " << disceplyne << "\n";
+	}
+};
 
-    static Dog deserialize(const uint8_t* buffer, size_t length) {
-        std::string restored_name = "";
-        size_t pos = 0;
+class Student {
+private:
+	std::string name;
+	int year;
+public:
+	Student(std::string name, int year) {
+		this->name = name;
+		this->year = year;
+	}
 
-        while (buffer[pos] != '\0') {
-            restored_name += buffer[pos];
-            pos++;
-        }
+	void describe() const {
+		std::cout << "Students name: " << name << " student year of class: " << year << "\n";
 
-        pos++;
+	}
+};
+class Clasroom {
+private:
+	std::string roomNumber;
+	Computer computer;
+	Printer printer;
+	Teacher* teacher;
+	static const int max_students = 30;
+	Student* students[max_students];
+	int student_count;
+public:
+	Clasroom(std::string roomNumber,
+		std::string computer_model,
+		int computer_ram,
+		std::string printer_model,
+		bool printer_color)
+		: computer(computer_model, computer_ram),
+		printer(printer_model, printer_color) {
+		this->roomNumber = roomNumber;
+		this->teacher = nullptr;
+		this->student_count = 0;
+		for (int i = 0; i < max_students; i++) {
+			students[i] = nullptr;
+		}
+	}
+	void setTeacher(Teacher* teacher) {
+		this->teacher = teacher;
+	}
 
-        uint8_t restored_age = buffer[pos];
+	void addStudent(Student* student) {
+		if (student_count < max_students) {
+			students[student_count] = student;
+			student_count++;
+		}
+		else {
+			std::cout << "clasroom is full, can not add student\n";
+		}
+	}
 
-        return Dog(restored_name, restored_age);
-    }
+	void describe() {
+		std::cout << "Clasroom number: " << roomNumber << "\n\n";
+		computer.describe();
+		printer.describe();
+		if (teacher != nullptr) {
+			teacher->describe();
+		}
+		else {
+			std::cout << "no teacher in clasroom\n";
+		}
+
+		if (student_count == 0) {
+			std::cout << "no students in clasroom\n";
+		}
+		else {
+			for (int i = 0; i < student_count; i++) {
+				students[i]->describe();
+			}
+		}
+	}
 };
 
 int main() {
-    Dog originalDog("Jack", 5);
-    std::cout << " Original: " << originalDog.get_name() << " (Age: " << (int)originalDog.get_age() << ")\n";
+	Teacher teacher("Yevhenii Kubiuk", "CS560");
 
-    uint8_t memoryArray[100];
-    size_t dataSize = 0;
+	Student student1("Anna", 11);
+	Student student2("george", 10);
+	Student student3("Sofia", 10);
 
-    originalDog.serialize(memoryArray, dataSize);
-    std::cout << " Packed Total bytes : " << dataSize << "\n";
+	Clasroom clasroom(
+		"F1",
+		"chotatammodel228",
+		16,
+		"super printer",
+		true
+	);
 
-    Dog restoredDog = Dog::deserialize(memoryArray, dataSize);
-    std::cout << " Restored: " << restoredDog.get_name() << " (Age: " << (int)restoredDog.get_age() << ")\n\n";
+	clasroom.setTeacher(&teacher);
 
-    std::ofstream outFile("dog_data.bin", std::ios::binary);
-    outFile.write((char*)memoryArray, dataSize);
-    outFile.close();
-    std::cout << "Saved to file 'dog_data.bin'\n";
+	clasroom.addStudent(&student1);
+	clasroom.addStudent(&student2);
+	clasroom.addStudent(&student3);
 
-    uint8_t fileArray[100];
-    std::ifstream inFile("dog_data.bin", std::ios::binary);
-    inFile.read((char*)fileArray, dataSize);
-    inFile.close();
-    std::cout << "Read from file.\n";
+	clasroom.describe();
 
-    Dog fileDog = Dog::deserialize(fileArray, dataSize);
-    std::cout << "Restored from file: " << fileDog.get_name() << " (Age: " << (int)fileDog.get_age() << ")\n";
-
-    return 0;
+	return 0;
 }
