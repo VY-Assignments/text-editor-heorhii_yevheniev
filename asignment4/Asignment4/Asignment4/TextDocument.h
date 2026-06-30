@@ -19,5 +19,8 @@ public:
 
 	int getLineCount() const;
 	Line* getLine(int index) const;
+
+	void clear();
+	bool deserialize(const std::string& data);
 	~TextDocument();
 };

@@ -142,6 +142,7 @@
     <ClCompile Include="Asignment4.cpp" />
     <ClCompile Include="ChecklistLine.cpp" />
     <ClCompile Include="ContactLine.cpp" />
+    <ClCompile Include="FileManager.cpp" />
     <ClCompile Include="ProgramInterface.cpp" />
     <ClCompile Include="TextDocument.cpp" />
     <ClCompile Include="TextLine.cpp" />
@@ -149,6 +150,7 @@
   <ItemGroup>
     <ClInclude Include="ChecklistLine.h" />
     <ClInclude Include="ContactLine.h" />
+    <ClInclude Include="FileManager.h" />
     <ClInclude Include="Line.h" />
     <ClInclude Include="ProgramInterface.h" />
     <ClInclude Include="TextDocument.h" />

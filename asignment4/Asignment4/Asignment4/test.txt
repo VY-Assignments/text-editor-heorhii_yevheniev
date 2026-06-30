@@ -1,0 +1,3 @@
+TEXT|Hello world
+CONTACT|Alice|Smith|alice@example.com
+CHECK|1|prepare agenda

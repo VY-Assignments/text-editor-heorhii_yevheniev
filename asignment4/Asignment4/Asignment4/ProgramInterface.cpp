@@ -2,6 +2,7 @@
 #include "TextLine.h"
 #include "ContactLine.h"
 #include "ChecklistLine.h"
+#include "FileManager.h"
 #include <iostream>
 #include <limits>
 #include <string>
@@ -14,6 +15,8 @@ void ProgramInterface::printMenu() const {
 	std::cout << "4. Toggle checklist row\n";
 	std::cout << "5. Print document\n";
 	std::cout << "6. Print serialized document\n";
+	std::cout << "7. Save document to file\n";
+	std::cout << "8. load document from file\n";
 	std::cout << "0. Exit\n";
 }
 
@@ -89,6 +92,40 @@ void ProgramInterface::printSerializedDocument() const {
 	std::cout << document.serialize() << std::endl;
 }
 
+void ProgramInterface::saveDocument() {
+	std::string path;
+	std::cout << "enter path to file\n";
+	std::getline(std::cin, path);
+	std::string serializedData = document.serialize();
+
+	if (FileManager::saveTextToFile(path, serializedData)) {
+		std::cout << "document saved\n";
+	}
+	else {
+		std::cout << "Error occured, unable to save document\n";
+	}
+}
+
+void ProgramInterface::loadDocument() {
+	std::string path;
+	std::string data;
+
+	std::cout << "Enter path to file\n";
+	std::getline(std::cin, path);
+
+	if (!FileManager::loadTextFromFile(path, data)) {
+		std::cout << "Error occured, could not open file\n";
+		return;
+	}
+
+	if (!document.deserialize(data)) {
+		std::cout << "Error occured, file format is incorrect.\n";
+		return;
+	}
+
+	std::cout << "Document loaded\n";
+}
+
 void ProgramInterface::run() {
 	int choice = -1;
 	bool running = true;
@@ -115,6 +152,10 @@ void ProgramInterface::run() {
 			printDocument();break;
 		case 6:
 			printSerializedDocument();break;
+		case 7:
+			saveDocument();break;
+		case 8:
+			loadDocument();break;
 		case 0:
 			running = false;break;
 		default:

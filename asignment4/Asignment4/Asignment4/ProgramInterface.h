@@ -12,6 +12,8 @@ private:
     void toggleChecklistRow();
     void printDocument() const;
     void printSerializedDocument() const;
+    void saveDocument();
+    void loadDocument();
     void clearInput();
 public:
     void run();

@@ -1,5 +1,10 @@
 #include "TextDocument.h"
+#include "TextLine.h"
+#include "ContactLine.h"
+#include "ChecklistLine.h"
 #include <iostream>
+#include <sstream>
+#include <string>
 TextDocument::TextDocument() {
 	lines_count = 0;
 	capacity = 2;
@@ -71,6 +76,69 @@ Line* TextDocument::getLine(int index) const {
 		return nullptr;
 	}
 	return lines[index];
+}
+
+void TextDocument::clear() {
+	for (int i = 0; i < lines_count; i++) {
+		delete lines[i];
+		lines[i] = nullptr;
+	}
+	lines_count = 0;
+}
+
+bool TextDocument::deserialize(const std::string& data) {
+	clear();
+	std::stringstream stream(data);
+	std::string line;
+	while (std::getline(stream, line)) {
+		if (line.empty()) {
+			continue;
+		}
+
+		if (line.rfind("TEXT|", 0) == 0) {
+			std::string text = line.substr(5);
+			addLine(new TextLine(text));
+		}
+		else if (line.rfind("CHECK|", 0) == 0) {
+			size_t firstSeparator = line.find('|');
+			size_t secondSeparator = line.find('|', firstSeparator + 1);
+
+			if (secondSeparator == std::string::npos) {
+				return false;
+			}
+			std::string checkedText = line.substr(firstSeparator + 1, secondSeparator - firstSeparator - 1);
+			std::string item = line.substr(secondSeparator + 1);
+
+			bool checked = false;
+			if (checkedText == "1") {
+				checked = true;
+			}else if (checkedText == "0") {
+				checked = false;
+			}else {
+				return false;
+			}
+			addLine(new ChecklistLine(item, checked));
+		}
+		else if (line.rfind("CONTACT|", 0) == 0) {
+			size_t firstSeparator = line.find('|');
+			size_t secondSeparator = line.find('|', firstSeparator + 1);
+			size_t thirdSeparator = line.find('|', secondSeparator + 1);
+
+			if (secondSeparator == std::string::npos || thirdSeparator == std::string::npos) {
+				return false;
+			}
+
+			std::string name = line.substr(firstSeparator + 1, secondSeparator - firstSeparator - 1);
+			std::string surname = line.substr(secondSeparator + 1, thirdSeparator - secondSeparator - 1);
+			std::string email = line.substr(thirdSeparator + 1);
+
+			addLine(new ContactLine(name, surname, email));
+		}
+		else {
+			return false;
+		}
+	}
+	return true;
 }
 
 TextDocument::~TextDocument(){
