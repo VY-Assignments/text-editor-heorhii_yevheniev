@@ -141,6 +141,42 @@ bool TextDocument::deserialize(const std::string& data) {
 	return true;
 }
 
+bool TextDocument::encryptAll(DllCipher& cipher, int key) {
+	for (int i = 0; i < lines_count; i++) {
+		if (!lines[i]->encrypt(cipher, key)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool TextDocument::decryptAll(DllCipher& cipher, int key) {
+	for (int i = 0; i < lines_count; i++) {
+		if (!lines[i]->decrypt(cipher, key)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool TextDocument::encryptAllVigenere(DllCipher& cipher, const std::string& key) {
+	for (int i = 0; i < lines_count; i++) {
+		if (!lines[i]->encryptVigenere(cipher, key)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool TextDocument::decryptAllVigenere(DllCipher& cipher, const std::string& key) {
+	for (int i = 0; i < lines_count; i++) {
+		if (!lines[i]->decryptVigenere(cipher, key)) {
+			return false;
+		}
+	}
+	return true;
+}
+
 TextDocument::~TextDocument(){
 	for (int i = 0; i < lines_count; i++) {
 		delete lines[i];

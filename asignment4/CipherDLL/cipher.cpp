@@ -1,168 +1,196 @@
 #include "pch.h"
-
 #define CIPHER_DLL_EXPORTS
 #include "cipher_api.h"
 #include <string>
 #include <cstring>
-#include <cstddef>
-
-static bool is_uppercase_letter(char ch) {
-	return ch >= 'A' && ch <= 'Z';
-}
-
-static bool is_lowercase_letter(char ch) {
-	return ch >= 'a' && ch <= 'z';
-}
-
-static bool is_letter(char ch) {
-	return is_uppercase_letter(ch) || is_lowercase_letter(ch);
-}
-
-static int normalize_shift(int shift) {
-	shift = shift % 26;
-
-	if (shift < 0) {
-		shift += 26;
-	}
-	return shift;
-}
-
-static char shift_char(char ch, int shift) {
-	shift = normalize_shift(shift);
-	if (is_uppercase_letter(ch)) {
-		return static_cast<char>('A' + (ch - 'A' + shift) % 26);
-	}
-
-	if (is_lowercase_letter(ch)) {
-		return static_cast<char>('a' + (ch - 'a' + shift) % 26);
-	}
-	return ch;
-}
-
-static int key_letter_to_shift(char keyChar) {
-	if (is_uppercase_letter(keyChar)) {
-		return keyChar - 'A';
-	}
-	if (is_lowercase_letter(keyChar)) {
-		return keyChar - 'a';
-	}
-	return 0;
-}
-
-static char* copy_string_to_c_string(const std::string& text) {
-	char* result = new char[text.size() + 1];
-	std::memcpy(result, text.c_str(), text.size() + 1);
-	return result;
-}
-
 
 class Cipher {
 public:
-	virtual std::string encrypt(const std::string& text) = 0;
-	virtual std::string decrypt(const std::string& text) = 0;
-	virtual ~Cipher() = default;
+    virtual char* encrypt(const char* text) = 0;
+    virtual char* decrypt(const char* text) = 0;
+    virtual ~Cipher() {}
 };
+
+static char* create_result_string(const std::string& text) {
+    char* result = new char[text.length() + 1];
+
+    for (size_t i = 0; i < text.length(); i++) {
+        result[i] = text[i];
+    }
+
+    result[text.length()] = '\0';
+    return result;
+}
+
+static bool is_uppercase_letter(char symbol) {
+    return symbol >= 'A' && symbol <= 'Z';
+}
+
+static bool is_lowercase_letter(char symbol) {
+    return symbol >= 'a' && symbol <= 'z';
+}
+
+static bool is_letter(char symbol) {
+    return is_uppercase_letter(symbol) || is_lowercase_letter(symbol);
+}
+
+static int normalize_shift(int shift) {
+    int result = shift % 26;
+    if (result < 0) {
+        result += 26;
+    }
+    return result;
+}
+
+static char shift_char(char symbol, int shift) {
+    if (!is_letter(symbol)) {
+        return symbol;
+    }
+    int normalizedShift = normalize_shift(shift);
+    if (is_uppercase_letter(symbol)) {
+        return static_cast<char>('A' + (symbol - 'A' + normalizedShift) % 26);
+    }
+    return static_cast<char>('a' + (symbol - 'a' + normalizedShift) % 26);
+}
+
+static int key_letter_to_shift(char symbol) {
+    if (is_uppercase_letter(symbol)) {
+        return symbol - 'A';
+    }
+    if (is_lowercase_letter(symbol)) {
+        return symbol - 'a';
+    }
+    return 0;
+}
 
 class CaesarCipher : public Cipher {
 private:
-	int key_;
-
+    int key;
 public:
-	CaesarCipher(int key) {
-		key_ = key;
-	}
-	std::string encrypt(const std::string& text) override {
-		std::string result = text;
-		for (std::size_t i = 0; i < result.size(); i++) {
-			result[i] = shift_char(result[i], key_);
-		}
-		return result;
-	}
-	std::string decrypt(const std::string& text) override {
-		std::string result = text;
-		for (std::size_t i = 0; i < result.size(); i++) {
-			result[i] = shift_char(result[i], -key_);
-		}
-		return result;
-	}
+    CaesarCipher(int keyValue) {
+        key = keyValue;
+    }
+
+    char* encrypt(const char* text) override {
+        if (text == nullptr) {
+            return nullptr;
+        }
+        std::string result;
+        for (int i = 0; text[i] != '\0'; i++) {
+            result += shift_char(text[i], key);
+        }
+        return create_result_string(result);
+    }
+
+    char* decrypt(const char* text) override {
+        if (text == nullptr) {
+            return nullptr;
+        }
+        std::string result;
+        for (int i = 0; text[i] != '\0'; i++) {
+            result += shift_char(text[i], -key);
+        }
+        return create_result_string(result);
+    }
 };
 
 class VigenereCipher : public Cipher {
 private:
-	std::string key_;
+    std::string key;
 public:
-	VigenereCipher(const std::string& key) {
-		for (std::size_t i = 0; i < key.size(); i++) {
-			if (is_letter(key[i])) {
-				key_ += key[i];
-			}
-		}
+    VigenereCipher(const char* keyValue) {
+        if (keyValue == nullptr || keyValue[0] == '\0') {
+            key = "a";
+        }
+        else {
+            key = keyValue;
+        }
+    }
 
-		if (key_.empty()) {
-			key_ = "A";
-		}
-	}
-	std::string encrypt(const std::string& text) override {
-		return process(text, true);
-	}
-	std::string decrypt(const std::string& text) override {
-		return process(text, false);
-	}
-private:
-	std::string process(const std::string& text, bool encryptMode) {
-		std::string result = text;
-		std::size_t keyIndex = 0;
-		for (std::size_t i = 0; i < result.size(); i++) {
-			if (is_letter(result[i])) {
-				char keyChar = key_[keyIndex % key_.size()];
-				int shift = key_letter_to_shift(keyChar);
+    char* encrypt(const char* text) override {
+        if (text == nullptr) {
+            return nullptr;
+        }
 
-				if (encryptMode == false) {
-					shift = -shift;
-				}
-				result[i] = shift_char(result[i], shift);
-				keyIndex++;
-			}
-		}
-		return result;
-	}
+        std::string result;
+        int keyIndex = 0;
+
+        for (int i = 0; text[i] != '\0'; i++) {
+            char current = text[i];
+
+            if (is_letter(current)) {
+                int shift = key_letter_to_shift(key[keyIndex % key.length()]);
+                result += shift_char(current, shift);
+                keyIndex++;
+            }
+            else {
+                result += current;
+            }
+        }
+
+        return create_result_string(result);
+    }
+
+    char* decrypt(const char* text) override {
+        if (text == nullptr) {
+            return nullptr;
+        }
+
+        std::string result;
+        int keyIndex = 0;
+
+        for (int i = 0; text[i] != '\0'; i++) {
+            char current = text[i];
+
+            if (is_letter(current)) {
+                int shift = key_letter_to_shift(key[keyIndex % key.length()]);
+                result += shift_char(current, -shift);
+                keyIndex++;
+            }
+            else {
+                result += current;
+            }
+        }
+
+        return create_result_string(result);
+    }
 };
 
-
 extern "C" {
-	CIPHER_API cipher_t cipher_create_caesar(int key) {
-		Cipher* cipher = new CaesarCipher(key);
-		return static_cast<cipher_t>(cipher);
-	}
-	CIPHER_API cipher_t cipher_create_vigenere(const char* key) {
-		if (key == nullptr) {
-			return nullptr;
-		}
-		Cipher* cipher = new VigenereCipher(key);
-		return static_cast<cipher_t>(cipher);
-	}
-	CIPHER_API char* cipher_encrypt(cipher_t cipher, const char* text) {
-		if (cipher == nullptr || text == nullptr) {
-			return nullptr;
-		}
-		Cipher* realCipher = static_cast<Cipher*>(cipher);
-		std::string encryptedText = realCipher->encrypt(text);
-		return copy_string_to_c_string(encryptedText);
-	}
-	CIPHER_API char* cipher_decrypt(cipher_t cipher, const char* text) {
-		if (cipher == nullptr || text == nullptr) {
-			return nullptr;
-		}
+    CIPHER_API cipher_t cipher_create_caesar(int key) {
+        return new CaesarCipher(key);
+    }
+    CIPHER_API cipher_t cipher_create_vigenere(const char* key) {
+        return new VigenereCipher(key);
+    }
+    CIPHER_API char* cipher_encrypt(cipher_t cipher, const char* text) {
+        if (cipher == nullptr || text == nullptr) {
+            return nullptr;
+        }
 
-		Cipher* realCipher = static_cast<Cipher*>(cipher);
-		std::string decryptedText = realCipher->decrypt(text);
-		return copy_string_to_c_string(decryptedText);
-	}
-	CIPHER_API void cipher_destroy(cipher_t cipher) {
-		Cipher* realCipher = static_cast<Cipher*>(cipher);
-		delete realCipher;
-	}
-	CIPHER_API void cipher_free(char* str) {
-		delete[] str;
-	}
+        Cipher* cipherObject = static_cast<Cipher*>(cipher);
+
+        return cipherObject->encrypt(text);
+    }
+    CIPHER_API char* cipher_decrypt(cipher_t cipher, const char* text) {
+        if (cipher == nullptr || text == nullptr) {
+            return nullptr;
+        }
+
+        Cipher* cipherObject = static_cast<Cipher*>(cipher);
+
+        return cipherObject->decrypt(text);
+    }
+    CIPHER_API void cipher_destroy(cipher_t cipher) {
+        if (cipher == nullptr) {
+            return;
+        }
+
+        Cipher* cipherObject = static_cast<Cipher*>(cipher);
+
+        delete cipherObject;
+    }
+    CIPHER_API void cipher_free(char* text) {
+        delete[] text;
+    }
 }
