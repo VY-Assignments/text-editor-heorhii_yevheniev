@@ -1,153 +1,254 @@
-#include<iostream>
-#include<string>
-class Computer {
-private:
-	std::string model;
-	int ram;
+#include <iostream>
+#include <string>
+#include <vector>
+#include <iomanip>
+
+class Product{
 public:
-	Computer(std::string model, int ram) {
-		this->model = model;
-		this->ram = ram;
-	}
-
-	void describe() const {
-		std::cout << "Computer:" << model << ", RAM:" << ram << "\n";
-	}
-
-};
-class Printer {
-private:
-	std::string model;
-	bool color;
-public:
-	Printer(std::string model, bool color) {
-		this->model = model;
-		this->color = color;
-	}
-
-	void describe()const{
-		std::cout << "Printer model:" << model;
-		if (color) {
-			std::cout << ", IS color printor\n";
-		}
-		else {
-			std::cout << "is NOT color printor\n";
-		}
-		}
-
-};
-class Teacher {
-private:
-	std::string name;
-	std::string disceplyne;
-public:
-	Teacher(std::string Name, std::string Disceplyne) {
-		this->disceplyne = Disceplyne;
-		this->name = Name;
-	}
-
-	void describe() const {
-		std::cout << "Teachers name: " << name << ", Teachers subject: " << disceplyne << "\n";
-	}
+    virtual std::string getName() const = 0;
+    virtual double getPrice() const = 0;
+    virtual ~Product() = default;
 };
 
-class Student {
+class Laptop : public Product
+{
 private:
-	std::string name;
-	int year;
+    double price;
+    std::string serialNumber;
 public:
-	Student(std::string name, int year) {
-		this->name = name;
-		this->year = year;
-	}
+    Laptop(double price, const std::string& serialNumber)
+        : price(price), serialNumber(serialNumber)
+    {}
 
-	void describe() const {
-		std::cout << "Students name: " << name << " student year of class: " << year << "\n";
+    std::string getName() const override
+    {
+        return "Laptop";
+    }
 
-	}
-};
-class Clasroom {
-private:
-	std::string roomNumber;
-	Computer computer;
-	Printer printer;
-	Teacher* teacher;
-	static const int max_students = 30;
-	Student* students[max_students];
-	int student_count;
-public:
-	Clasroom(std::string roomNumber,
-		std::string computer_model,
-		int computer_ram,
-		std::string printer_model,
-		bool printer_color)
-		: computer(computer_model, computer_ram),
-		printer(printer_model, printer_color) {
-		this->roomNumber = roomNumber;
-		this->teacher = nullptr;
-		this->student_count = 0;
-		for (int i = 0; i < max_students; i++) {
-			students[i] = nullptr;
-		}
-	}
-	void setTeacher(Teacher* teacher) {
-		this->teacher = teacher;
-	}
+    double getPrice() const override
+    {
+        return price;
+    }
 
-	void addStudent(Student* student) {
-		if (student_count < max_students) {
-			students[student_count] = student;
-			student_count++;
-		}
-		else {
-			std::cout << "clasroom is full, can not add student\n";
-		}
-	}
-
-	void describe() {
-		std::cout << "Clasroom number: " << roomNumber << "\n\n";
-		computer.describe();
-		printer.describe();
-		if (teacher != nullptr) {
-			teacher->describe();
-		}
-		else {
-			std::cout << "no teacher in clasroom\n";
-		}
-
-		if (student_count == 0) {
-			std::cout << "no students in clasroom\n";
-		}
-		else {
-			for (int i = 0; i < student_count; i++) {
-				students[i]->describe();
-			}
-		}
-	}
+    std::string getSerialNumber() const
+    {
+        return serialNumber;
+    }
 };
 
-int main() {
-	Teacher teacher("Yevhenii Kubiuk", "CS560");
+class Mouse : public Product
+{
+private:
+    double price;
+public:
+    Mouse(double price)
+        : price(price)
+    {}
 
-	Student student1("Anna", 11);
-	Student student2("george", 10);
-	Student student3("Sofia", 10);
+    std::string getName() const override
+    {
+        return "Mouse";
+    }
 
-	Clasroom clasroom(
-		"F1",
-		"chotatammodel228",
-		16,
-		"super printer",
-		true
-	);
+    double getPrice() const override
+    {
+        return price;
+    }
+};
 
-	clasroom.setTeacher(&teacher);
+class GameLicense : public Product
+{
+private:
+    double price;
+    std::string activationKey;
+public:
+    GameLicense(double price, const std::string& activationKey)
+        : price(price), activationKey(activationKey)
+    {}
 
-	clasroom.addStudent(&student1);
-	clasroom.addStudent(&student2);
-	clasroom.addStudent(&student3);
+    std::string getName() const override
+    {
+        return "GameLicense";
+    }
 
-	clasroom.describe();
+    double getPrice() const override
+    {
+        return price;
+    }
 
-	return 0;
+    std::string getActivationKey() const
+    {
+        return activationKey;
+    }
+};
+
+class Customer
+{
+private:
+    std::string name;
+    bool vatPayer;
+public:
+    Customer(const std::string& name, bool vatPayer)
+        : name(name), vatPayer(vatPayer)
+    {}
+
+    std::string getName() const
+    {
+        return name;
+    }
+
+    bool isVatPayer() const
+    {
+        return vatPayer;
+    }
+};
+
+class OrderItem
+{
+private:
+    Product* product;
+    int quantity;
+public:
+    OrderItem(Product* product, int quantity)
+        : product(product), quantity(quantity)
+    {}
+
+    Product* getProduct() const
+    {
+        return product;
+    }
+
+    int getQuantity() const
+    {
+        return quantity;
+    }
+};
+
+class TaxCalculator
+{
+private:
+    double vatPercent;
+    double laptopCustomsFee;
+public:
+    TaxCalculator(double vatPercent, double laptopCustomsFee)
+        : vatPercent(vatPercent), laptopCustomsFee(laptopCustomsFee){}
+
+    double getVatPercent() const
+    {
+        return vatPercent;
+    }
+
+    double getLaptopCustomsFee() const
+    {
+        return laptopCustomsFee;
+    }
+
+    double calculateItemPrice(double productPrice, int quantity, bool isVatPayer, bool hasCustomsFee) const
+    {
+        double unitPrice = productPrice;
+        if (isVatPayer)
+        {
+            unitPrice += productPrice * vatPercent / 100.0;
+        }
+        if (hasCustomsFee)
+        {
+            unitPrice += laptopCustomsFee;
+        }
+        return unitPrice * quantity;
+    }
+
+    double calculateTotal(const std::vector<double>& itemPrices) const
+    {
+        double total = 0.0;
+        for (double price : itemPrices)
+        {
+            total += price;
+        }
+        return total;
+    }
+};
+
+class Order
+{
+private:
+    const Customer& customer;
+    std::vector<OrderItem> items;
+public:
+    Order(const Customer& customer)
+        : customer(customer){}
+
+    void addItem(Product* product, int quantity)
+    {
+        if (product == nullptr || quantity <= 0)
+        {
+            return;
+        }
+        items.emplace_back(product, quantity);
+    }
+
+    void printInvoice(const TaxCalculator& taxCalculator) const
+    {
+        std::vector<double> itemPrices;
+        std::cout << std::fixed << std::setprecision(1);
+        std::cout << "Customer: " << customer.getName() << '\n';
+        for (const OrderItem& item : items)
+        {
+            Product* product = item.getProduct();
+            Laptop* laptop = dynamic_cast<Laptop*>(product);
+            GameLicense* game = dynamic_cast<GameLicense*>(product);
+            bool hasCustomsFee = laptop != nullptr;
+            double itemPrice = taxCalculator.calculateItemPrice(
+                product->getPrice(),
+                item.getQuantity(),
+                customer.isVatPayer(),
+                hasCustomsFee
+            );
+            itemPrices.push_back(itemPrice);
+            std::cout << "-- " << product->getName();
+            if (laptop != nullptr)
+            {
+                std::cout << " (SN: " << laptop->getSerialNumber() << ")";
+            }
+            else if (game != nullptr)
+            {
+                std::cout << " (Key: " << game->getActivationKey() << ")";
+            }
+            if (item.getQuantity() > 1)
+            {
+                std::cout << " (x" << item.getQuantity() << ")";
+            }
+            std::cout << " | Price (VAT ";
+            if (customer.isVatPayer())
+            {
+                std::cout << taxCalculator.getVatPercent();
+            }
+            else
+            {
+                std::cout << 0.0;
+            }
+            std::cout << "%";
+            if (hasCustomsFee)
+            {
+                std::cout << " + Customs " << taxCalculator.getLaptopCustomsFee();
+            }
+            std::cout << "): " << itemPrice << '\n';
+        }
+        double totalDue = taxCalculator.calculateTotal(itemPrices);
+        std::cout << "Total due: " << totalDue << '\n';
+    }
+};
+
+int main()
+{
+    TaxCalculator taxCalc(20, 50);
+    Product* laptop = new Laptop(1000.0, "SN-ASUS-2026X");
+    Product* game = new GameLicense(50.0, "X9RT-Z67Y-PL12");
+    Customer customer("Ivan", true);
+    Order order(customer);
+    order.addItem(laptop, 1);
+    order.addItem(game, 1);
+    order.printInvoice(taxCalc);
+    delete laptop;
+    delete game;
+    return 0;
 }
